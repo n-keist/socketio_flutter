@@ -20,6 +20,10 @@ public class SwiftSocketioFlutterPlugin: NSObject, FlutterPlugin {
     static func getMethodChannel() -> FlutterMethodChannel {
         return (methodChannel)!
     }
+    
+    static func sendLog(text: String) -> Void {
+        getMethodChannel().invokeMethod("sendLog", arguments: text)
+    }
 
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
         
@@ -53,21 +57,44 @@ public class SwiftSocketioFlutterPlugin: NSObject, FlutterPlugin {
             socket = socketManager.socket(forNamespace: namespace)
             
             socket?.on(clientEvent: .connect, callback: { (data, ack) in
+                SwiftSocketioFlutterPlugin.sendLog(text: "SOCKET CONNECTED")
                 SwiftSocketioFlutterPlugin
                     .getMethodChannel()
-                    .invokeMethod("callbackSocketConnected", arguments: true)
+                    .invokeMethod(
+                        "\(url)-\(namespace)-callbackSocketConnected",
+                        arguments: true
+                )
+            })
+            
+            socket?.onAny({ (event) in
+                SwiftSocketioFlutterPlugin.sendLog(text: "SOCKET ON " + event.event + " WITH DESC " + event.description)
+                SwiftSocketioFlutterPlugin
+                    .getMethodChannel()
+                    .invokeMethod(
+                        "\(url)-\(namespace)-listen.\(event.event)",
+                        arguments: event.items
+                )
             })
             
             socket?.connect()
+            result(true)
         }
         
         if call.method == "socketDisconnect" {
             socket?.disconnect()
-            result("disconnected")
+            result(true)
         }
         
         if call.method == "socketStatus" {
             result(socket?.status.active)
+        }
+        
+        if call.method.starts(with: "socketSend") {
+            let argumentsDictionary = call.arguments as! NSDictionary
+            let data = try? JSONSerialization.data(withJSONObject: argumentsDictionary, options: .prettyPrinted)
+            let json = String(data: data!, encoding: String.Encoding.ascii)
+            socket?.emit(call.method.components(separatedBy: "socketSend-")[1], with: [json as Any])
+            result(true)
         }
 
         if call.method == "getPlatformVersion" {

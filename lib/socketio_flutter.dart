@@ -21,8 +21,22 @@ class SocketIOFlutter {
 
   Future<void> _handler(MethodCall call) async {
     if(call.method != null && call.method.isNotEmpty) {
-      if(call.method == "callbackSocketConnected") {
-        
+      if(call.method == "sendLog") {
+        print("IOS >> ${call.arguments}");
+      } else {
+        var method = call.method.split("-");
+        var url = method[0];
+        var namespace = method[1];
+        var function = method[2];
+
+        String id = makeId(url, namespace);
+        if(exists(id)) {
+          SocketClient socketClient = getById(id);
+          print("#$id handling $function");
+          socketClient.handle(function, call.arguments);
+        } else {
+          print("Socket $id does not exist");
+        }
       }
     }
   }
@@ -31,11 +45,18 @@ class SocketIOFlutter {
     return "$url-$namespace";
   }
 
+  SocketClient getById(String id) {
+    return _clients[id];
+  }
+
+  bool exists(String id) {
+    return _clients.containsKey(id);
+  }
 
   SocketClient createClient(String url, String namespace, {String query}) {
     String id = makeId(url, namespace);
     if(!_clients.containsKey(id)) {
-      SocketClient socketClient = new SocketClient(url, namespace, query: query);
+      SocketClient socketClient = new SocketClient(_channel, url, namespace, query: query);
       _clients.putIfAbsent(id, () => socketClient);
     }
     return null;

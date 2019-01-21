@@ -1,14 +1,10 @@
 # socketio_flutter
 
-A new flutter plugin project.
+A Flutter Plugin to connect to socket.io servers
 
-## Getting Started
+This plugin's focus is on iOS and to be more specific iOS and Swift.
+An Android implementation might come in the future, but is not planned.
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.io/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
 
-For help getting started with Flutter, view our 
-[online documentation](https://flutter.io/docs), which offers tutorials, 
-samples, guidance on mobile development, and a full API reference.
+## Installation
+Installation is currently not available due to progress of this project.
